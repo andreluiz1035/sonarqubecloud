@@ -4,36 +4,36 @@ on:
   push:
     branches:
       - main
-      - feature/**
+      - 'feature/**'
   pull_request:
-    types: [opened, synchronize, reopened]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # necessário para análise de PR
+          fetch-depth: 0
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Install dependencies (opcional)
         run: |
-          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
 
       - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          pip install sonar-scanner-cli
-          sonar-scanner \
-            -Dsonar.projectKey=andreluiz1035_sonarqubecloud \
-            -Dsonar.organization=andreluiz1035 \
-            -Dsonar.sources=. \
-            -Dsonar.python.version=3 \
+        with:
+          args: >
+            -Dsonar.projectKey=andreluiz1035_sonarqubecloud
+            -Dsonar.organization=andreluiz1035
+            -Dsonar.sources=.
+            -Dsonar.python.version=3
             -Dsonar.host.url=https://sonarcloud.io
