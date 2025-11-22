@@ -27,13 +27,9 @@ jobs:
           coverage run --source=src -m pytest
           coverage xml -o coverage.xml
 
-      - name: Debug coverage file
+      - name: Fix coverage paths
         run: |
-          echo "Arquivos na pasta atual:"
-          ls -la .
-          echo ""
-          echo "Procurando coverage.xml:"
-          find . -name "coverage.xml" -print
+          sed -i 's/\/home\/runner\/work\/sonarqubecloud\/sonarqubecloud\///g' coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
