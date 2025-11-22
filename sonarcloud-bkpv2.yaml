@@ -20,11 +20,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install coverage pytest
 
       - name: Run tests with coverage
         run: |
-          coverage run --source=src -m pytest
+          coverage run -m pytest
           coverage xml -o coverage.xml
 
       - name: SonarCloud Scan
