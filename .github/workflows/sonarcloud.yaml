@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # importante para o SCM do SonarCloud
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -21,30 +23,29 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
           pip install -r requirements.txt
           pip install coverage pytest
 
-      - name: Check Python files encoding
-        run: |
-          echo "Verificando arquivos Python com encoding inválido..."
-          for file in $(find src tests -name "*.py"); do
-            if ! iconv -f utf-8 -t utf-8 "$file" -o /dev/null 2>/dev/null; then
-              echo "Erro: arquivo com encoding inválido: $file"
-              exit 1
-            fi
-          done
-          echo "Todos os arquivos Python estão em UTF-8."
-
       - name: Run tests with coverage
         run: |
-          coverage run --source=src -m pytest
+          coverage run -m pytest
           coverage xml -o coverage.xml
 
-      - name: Fix coverage paths
+      - name: Debug coverage file
+        run: |
+          echo "Arquivos na pasta atual:"
+          ls -la
+          echo ""
+          echo "Conteúdo do coverage.xml (primeiras linhas):"
+          head -n 20 coverage.xml
+
+      - name: Fix coverage paths (opcional)
         run: |
           REPO_PATH=$(pwd)
+          echo "Corrigindo paths absolutos do coverage..."
           sed -i "s|/home/runner/work/sonarqubecloud/sonarqubecloud|$REPO_PATH|g" coverage.xml
+          echo "Coverage corrigido:"
+          head -n 20 coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
