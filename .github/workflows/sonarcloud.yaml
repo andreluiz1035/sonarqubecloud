@@ -28,7 +28,6 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          # Garante que a cobertura será gerada com paths relativos
           coverage run -m pytest
           coverage xml -o coverage.xml
 
@@ -42,9 +41,11 @@ jobs:
 
       - name: Fix coverage paths
         run: |
-          REPO_PATH=$(pwd)
           echo "Corrigindo paths absolutos do coverage..."
-          sed -i "s|/home/runner/work/sonarqubecloud/sonarqubecloud|$REPO_PATH|g" coverage.xml
+          # Ajusta o <source> do coverage.xml para ser relativo ao projeto
+          sed -i "s|<source>.*</source>|<source>src</source>|" coverage.xml
+          echo "Coverage.xml após ajuste:"
+          head -n 20 coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
