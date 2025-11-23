@@ -4,52 +4,61 @@ on:
   push:
     branches:
       - main
-      - feature/**
   pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.10]
 
     steps:
-      # Checkout do código
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # 1. Checkout do repositório
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      # Configura Python
+      # 2. Setup Python
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
 
-      # Instala dependências
+      # 3. Install dependencies
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
           pip install pytest pytest-cov coverage
 
-      # Cria arquivo .coveragerc (corrige paths ABSOLUTOS)
-      - name: Create .coveragerc
-        run: |
-          echo "[run]" > .coveragerc
-          echo "source = src" >> .coveragerc
-          echo "relative_files = True" >> .coveragerc
-
-      # Roda pytest + gera coverage.xml
+      # 4. Run tests with coverage
       - name: Run tests with coverage
         run: |
-          pytest --cov=src --cov-report xml:coverage.xml --cov-report term --cov-config=.coveragerc
+          coverage run --source=src -m pytest
+          coverage xml -o coverage.xml
+          coverage report
 
-      # Upload opcional (debug)
-      - name: Upload coverage.xml
+      # 5. Upload coverage artifact (opcional)
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
 
-      # 🚨 IMPORTANTE:
-      # Aqui NÃO colocamos o SonarCloud.
-      #
-      # O SonarCloud será executado pelo arquivo sonarcloud.yml,
-      # conforme você pediu.
+      # 6. Run SonarCloud scan
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=andreluiz1035_sonarqubecloud
+            -Dsonar.organization=andreluiz1035
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.inclusions=src/**/*.py
+            -Dsonar.test.inclusions=tests/**/*.py
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
