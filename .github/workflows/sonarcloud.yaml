@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # importante para o SCM do SonarCloud
+          fetch-depth: 0  # necessário para o SCM do SonarCloud
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -28,24 +28,8 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          coverage run -m pytest
+          coverage run --source=src -m pytest
           coverage xml -o coverage.xml
-
-      - name: Debug coverage file
-        run: |
-          echo "Arquivos na pasta atual:"
-          ls -la
-          echo ""
-          echo "Conteúdo do coverage.xml (primeiras linhas):"
-          head -n 20 coverage.xml
-
-      - name: Fix coverage paths
-        run: |
-          echo "Corrigindo paths absolutos do coverage..."
-          # Ajusta o <source> do coverage.xml para ser relativo ao projeto
-          sed -i "s|<source>.*</source>|<source>src</source>|" coverage.xml
-          echo "Coverage.xml após ajuste:"
-          head -n 20 coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
