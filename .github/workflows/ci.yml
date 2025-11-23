@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Configura Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # Instala dependências
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov coverage
+
+      # Cria arquivo .coveragerc (corrige paths ABSOLUTOS)
+      - name: Create .coveragerc
+        run: |
+          echo "[run]" > .coveragerc
+          echo "source = src" >> .coveragerc
+          echo "relative_files = True" >> .coveragerc
+
+      # Roda pytest + gera coverage.xml
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=src --cov-report xml:coverage.xml --cov-report term --cov-config=.coveragerc
+
+      # Upload opcional (debug)
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      # 🚨 IMPORTANTE:
+      # Aqui NÃO colocamos o SonarCloud.
+      #
+      # O SonarCloud será executado pelo arquivo sonarcloud.yml,
+      # conforme você pediu.
