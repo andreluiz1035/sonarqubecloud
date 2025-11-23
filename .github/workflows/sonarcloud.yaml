@@ -1,50 +1,54 @@
-name: SonarCloud
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - feature/**
   pull_request:
-    branches: [ "main" ]
 
 jobs:
-  sonarcloud:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # Checkout do código
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      # Configura Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
+      # Instala dependências
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
-          pip install coverage pytest
+          pip install pytest pytest-cov coverage
 
+      # Roda testes + gera coverage.xml
       - name: Run tests with coverage
         run: |
-          coverage run --source=src -m pytest
-          coverage xml -o coverage.xml --rcfile=coverage.ini
+          pytest --cov=src --cov-report xml:coverage.xml --cov-report term
 
-      - name: Normalize coverage paths
-        run: |
-          echo "Normalizando paths do coverage..."
-          sed -i "s|/home/runner/work/.*/src|src|g" coverage.xml
-          sed -i "s|/home/runner/work/.*/tests|tests|g" coverage.xml
-          echo "Coverage corrigido:"
-          head -n 20 coverage.xml
+      # Upload do relatório de cobertura para debug opcional
+      - name: Upload coverage.xml artifact (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
 
-      - name: SonarCloud Scan
+      # SonarCloud Scan
+      - name: SonarCloud Analysis
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
+          projectBaseDir: .
           args: >
             -Dsonar.projectKey=andreluiz1035_sonarqubecloud
             -Dsonar.organization=andreluiz1035
