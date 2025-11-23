@@ -40,6 +40,12 @@ jobs:
           echo "Conteúdo do coverage.xml (primeiras linhas):"
           head -n 20 coverage.xml
 
+      - name: Fix coverage paths
+        run: |
+          REPO_PATH=$(pwd)
+          echo "Corrigindo paths absolutos do coverage..."
+          sed -i "s|/home/runner/work/sonarqubecloud/sonarqubecloud|$REPO_PATH|g" coverage.xml
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
